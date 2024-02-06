@@ -4,7 +4,8 @@ from .models import (
     Client,
     Seller,
     Service,
-    Hotel
+    Hotel,
+    Region
 )
 
 
@@ -18,6 +19,12 @@ class ClientAdmin(admin.ModelAdmin):
 class SellerAdmin(admin.ModelAdmin):
     list_display = ('username', 'tg_id', 'register_at')
     search_fields = ('username', 'tg_id',)
+
+
+@admin.register(Region)
+class RegionAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
 
 
 @admin.register(Service)

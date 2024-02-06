@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,6 +40,15 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'bot',
 ]
+
+JAZZMIN_SETTINGS = {
+    # title of the window (Will default to current_admin_site.site_title if absent or None)
+    "site_title": "Library Admin",
+    "site_header": "TgAdmin",
+    "site_brand": "TgAdmin",
+    "welcome_sign": "Добро пожаловать в админ панель",
+    "hide_models": ["auth.user", "auth.group"],
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
