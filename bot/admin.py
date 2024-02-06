@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from models import (
+from .models import (
     Client,
     Seller,
     Service,
@@ -34,7 +34,7 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(Hotel)
 class HotelAdmin(admin.ModelAdmin):
-    list_display = ('name', 'address', 'region', 'description', 'phone_number', 'price', 'category')
+    list_display = ('name', 'owner', 'address', 'region', 'description', 'phone_number', 'price', 'category')
     search_fields = ('name', 'address', 'region', 'phone_number', 'category',)
     list_filter = ('region', 'category')
 
