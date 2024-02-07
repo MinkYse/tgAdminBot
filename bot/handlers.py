@@ -3,21 +3,29 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
-import Keyboards as kb
-from builders import profile
-from states import Form
-from models import Seller
+from asgiref.sync import sync_to_async
+import bot.Keyboards as kb
+from bot.builders import profile
+from bot.states import Form
+from bot.models import Seller
 
 router = Router()
+
+
+@sync_to_async
+def create_user(message):
+    seller = Seller()
+    seller.username = message.from_user.username
+    seller.tg_id = message.from_user.id
+    seller.save()
+
 
 @router.message(Command("start"))
 async def start(message: Message, state: FSMContext):
     await state.set_state(Form.position)
     await message.answer("Здравствуйте, выберите, что будете добавлять", reply_markup=kb.main_kb)
-    seller = Seller()
-    seller.username = message.from_user.username
-    seller.tg_id = message.from_user.id
-    seller.save()
+    await create_user(message)
+
 
 @router.message(F.text == "Услуга")
 @router.message(F.text == "Размещение")

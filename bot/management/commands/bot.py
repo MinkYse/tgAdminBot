@@ -1,17 +1,20 @@
 import asyncio
-import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
+# import os
+# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
+#
+# import django
+# django.setup()
+#
+# from django.core.management import call_command
 
-import django
-django.setup()
-
-from django.core.management import call_command
+from django.core.management.base import BaseCommand
+from django.conf import settings
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from handlers import router
+from bot.handlers import router
 
 
 bot = Bot(token='6644534760:AAGNW1Wkjw5kw9fDjn68WdHZAvYKj50sPWM', parse_mode=ParseMode.HTML)
@@ -23,5 +26,6 @@ async def main():
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
+class Command(BaseCommand):
     asyncio.run(main())
