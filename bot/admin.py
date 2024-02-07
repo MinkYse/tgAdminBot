@@ -29,7 +29,7 @@ class RegionAdmin(admin.ModelAdmin):
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'address', 'region', 'description', 'phone_number', 'price', 'category')
+    list_display = ('name', 'owner', 'address', 'region', 'description', 'phone_number', 'price', 'category', 'is_active')
     search_fields = ('name', 'address', 'region', 'phone_number', 'category',)
     list_filter = ('region', 'category')
 
@@ -41,7 +41,7 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(Hotel)
 class HotelAdmin(admin.ModelAdmin):
-    list_display = ('name', 'owner', 'address', 'region', 'description', 'phone_number', 'price', 'category')
+    list_display = ('name', 'owner', 'address', 'region', 'description', 'phone_number', 'price', 'category', 'is_active')
     search_fields = ('name', 'address', 'region', 'phone_number', 'category',)
     list_filter = ('region', 'category')
 

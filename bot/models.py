@@ -72,6 +72,7 @@ class ServiceBase(models.Model):
     image = ArrayField(models.CharField(), size=3, verbose_name='Фотографии')
     category = models.ForeignKey(Category, related_name='hotels', on_delete=models.CASCADE, verbose_name='Категория')
     owner = models.ForeignKey(Seller, related_name='hotels', on_delete=models.CASCADE, verbose_name='Владелец')
+    is_active = models.BooleanField(default=False, verbose_name='Активно')
 
     class Meta:
         abstract = True
