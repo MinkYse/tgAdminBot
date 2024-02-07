@@ -1,10 +1,11 @@
 from django.contrib import admin
 
-from models import (
+from .models import (
     Client,
     Seller,
     Service,
-    Hotel
+    Hotel,
+    Region
 )
 
 
@@ -20,9 +21,16 @@ class SellerAdmin(admin.ModelAdmin):
     search_fields = ('username', 'tg_id',)
 
 
+@admin.register(Region)
+class RegionAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
+
+
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'address', 'region', 'description', 'phone_number', 'price', 'category')
+    list_display = (
+    'name', 'owner', 'address', 'region', 'description', 'phone_number', 'price', 'category', 'is_active')
     search_fields = ('name', 'address', 'region', 'phone_number', 'category',)
     list_filter = ('region', 'category')
 
@@ -35,7 +43,8 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(Hotel)
 class HotelAdmin(admin.ModelAdmin):
-    list_display = ('name', 'address', 'region', 'description', 'phone_number', 'price', 'category')
+    list_display = (
+    'name', 'owner', 'address', 'region', 'description', 'phone_number', 'price', 'category', 'is_active')
     search_fields = ('name', 'address', 'region', 'phone_number', 'category',)
     list_filter = ('region', 'category')
 
@@ -44,4 +53,3 @@ class HotelAdmin(admin.ModelAdmin):
         return f'От {obj.min_price}₽ до {obj.max_price}₽'
 
     price.short_description = 'Диапазон цен'
-
