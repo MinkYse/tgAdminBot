@@ -1,12 +1,18 @@
 import asyncio
+import os
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
+
+import django
+django.setup()
+
+from django.core.management import call_command
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.enums.parse_mode import ParseMode
-from aiogram.filters import Command
-from aiogram.types import Message
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from handlers_client import router
+from handlers import router
+
 
 bot = Bot(token='6644534760:AAGNW1Wkjw5kw9fDjn68WdHZAvYKj50sPWM', parse_mode=ParseMode.HTML)
 dp = Dispatcher(storage=MemoryStorage())

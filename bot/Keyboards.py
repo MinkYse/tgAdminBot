@@ -21,6 +21,9 @@ hotel_kb = ReplyKeyboardMarkup(
             KeyboardButton(text="Гостевой дом"),
             KeyboardButton(text="Турбаза"),
             KeyboardButton(text="Шал*")
+        ],
+        [
+            KeyboardButton(text="Назад")
         ]
     ],
     resize_keyboard=True
