@@ -44,4 +44,13 @@ service_kb = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+cancel_kb = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton(text="Назад")
+        ]
+    ],
+    resize_keyboard=True
+)
+
 rmk = ReplyKeyboardRemove()

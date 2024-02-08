@@ -9,6 +9,6 @@ class Form(StatesGroup):
     description = State()
     min_money = State()
     max_money = State()
-    geo_position = State()
+    adres = State()
     get_district = State()
     

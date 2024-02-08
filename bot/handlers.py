@@ -1,13 +1,16 @@
-from aiogram import Router, F
+from aiogram import Router, F, types
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
+import phonenumbers
+from typing import List
 
 from asgiref.sync import sync_to_async
 import bot.Keyboards as kb
 from bot.builders import profile
 from bot.states import Form
 from bot.models import Seller
+from aiogram_media_group import media_group_handler
 
 router = Router()
 
@@ -18,7 +21,6 @@ def create_user(message):
     seller.username = message.from_user.username
     seller.tg_id = message.from_user.id
     seller.save()
-
 
 @router.message(Command("start"))
 async def start(message: Message, state: FSMContext):
@@ -38,69 +40,91 @@ async def position(message: Message, state: FSMContext):
 
         @router.message(Form.type_position)
         async def type_position(message: Message, state: FSMContext):
-            await state.update_data(type_position=message.text)
-            await state.set_state(Form.photo)
-            await message.answer("Отправьте 1-3 фото", reply_markup=kb.rmk)
+            if message.text.lower() != "назад":
+                await state.update_data(type_position=message.text)
+                await state.set_state(Form.photo)
+                await message.answer("Отправьте 1-3 фото", reply_markup=kb.cancel_kb)
+            else:
+                await state.set_state(Form.position)
 
         @router.message(Form.photo)
-        async def photo(message: Message, state: FSMContext):
-            await state.update_data(photo=message.photo[-1].file_id)
-            await state.set_state(Form.phone)
-            await message.answer("Введите свой контактный номер")
+        @media_group_handler
+        async def photo(messages: List[types.Message], state: FSMContext):
+            counter = 1
+            for m in messages:
+                await m.bot.download(file=m.photo[-1].file_id, destination=f'media/test{counter}.jpg')
+                print(f'Загружено {counter}')
+                counter += 1
 
         @router.message(Form.phone)
         async def phone(message: Message, state: FSMContext):
-            if message.text.isdigit():
-                await state.update_data(phone=message.text)
-                await state.set_state(Form.description)
-                await message.answer("Введите описание")
+            if message.text.lower() != "назад":
+                phone_number = phonenumbers.parse(message.text)
+                if phonenumbers.is_possible_number(phone_number):
+                    await state.update_data(phone=message.text)
+                    await state.set_state(Form.description)
+                    await message.answer("Введите описание", reply_markup=kb.cancel_kb)
+                else:
+                    await message.answer("Введите правильный контактный номер")
             else:
-                await message.answer("Введите правильный контактный номер")
-
+                await state.set_state(Form.photo)
         @router.message(Form.description)
         async def description(message: Message, state: FSMContext):
-            await state.update_data(description=message.text)
-            await state.set_state(Form.min_money)
-            await message.answer("Введите минимальную цену")
-
+            if message.text.lower() != "назад":
+                await state.update_data(description=message.text)
+                await state.set_state(Form.min_money)
+                await message.answer("Введите минимальную цену", reply_markup=kb.cancel_kb)
+            else:
+                await state.set_state(Form.phone)
         @router.message(Form.min_money)
         async def min_money(message: Message, state: FSMContext):
-            if message.text.isdigit():
-                await state.update_data(min_money=message.text)
-                await state.set_state(Form.max_money)
-                await message.answer("Введите максимальную цену")
+            if message.text.lower() != "назад":
+                if message.text.isdigit():
+                    await state.update_data(min_money=message.text)
+                    await state.set_state(Form.max_money)
+                    await message.answer("Введите максимальную цену", reply_markup=kb.cancel_kb)
+                else:
+                    await message.answer("Введите правильную минимальную цену")
             else:
-                await message.answer("Введите правильную минимальную цену")
+                await state.set_state(Form.description)
 
         @router.message(Form.max_money)
         async def max_money(message: Message, state: FSMContext):
-            if message.text.isdigit():
-                await state.update_data(max_money=message.text)
-                await state.set_state(Form.geo_position)
-                await message.answer("Введите ссылку на геопозицию")
+            if message.text.lower() != "назад":
+                if message.text.isdigit():
+                    await state.update_data(max_money=message.text)
+                    await state.set_state(Form.adres)
+                    await message.answer("Введите адрес в формате 'Город, улица, дом'", reply_markup=kb.cancel_kb)
+                else:
+                    await message.answer("Введите правильную максимальную цену")
             else:
-                await message.answer("Введите правильную максимальную цену")
+                await state.set_state(Form.min_money)
 
-        @router.message(Form.geo_position)
+        @router.message(Form.adres)
         async def geo_position(message: Message, state: FSMContext):
-            await state.update_data(geo_position=message.text)
-            await state.set_state(Form.get_district)
-            await message.answer("Выберите район", reply_markup=profile(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]))
-
+            if message.text.lower() != "назад":
+                await state.update_data(geo_position=message.text)
+                await state.set_state(Form.get_district)
+                await message.answer("Выберите район", reply_markup=profile(
+                    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Отмена"]))
+            else:
+                await state.set_state(Form.max_money)
         @router.message(Form.get_district)
         async def get_distriction(message: Message, state: FSMContext):
-            await state.update_data(get_distriction=message.text)
-            data = await state.get_data()
-            await state.clear()
-            await message.answer("Вы прошли опрос, ваша заявка отправлена на модерацию", reply_markup=kb.rmk)
+            if message.text.lower() != "назад":
+                await state.update_data(get_distriction=message.text)
+                data = await state.get_data()
+                await state.clear()
+                await message.answer("Вы прошли опрос, ваша заявка отправлена на модерацию", reply_markup=kb.cancel_kb)
 
-            formatted_text = []
-            [
-                formatted_text.append(f"{key}: {value}")
-                for key, value in data.items()
-            ]
-            await message.answer(f"{formatted_text}")
-
+                formatted_text = []
+                [
+                    formatted_text.append(f"{key}: {value}")
+                    for key, value in data.items()
+                ]
+                await message.answer(f"{formatted_text}")
+            else:
+                await state.set_state(Form.adres)
 
     elif msg == "услуга":
         await state.update_data(position=msg)
@@ -109,67 +133,90 @@ async def position(message: Message, state: FSMContext):
 
         @router.message(Form.type_position)
         async def type_position(message: Message, state: FSMContext):
-            await state.update_data(type_position=message.text)
-            await state.set_state(Form.photo)
-            await message.answer("Отправьте 1-3 фото", reply_markup=kb.rmk)
+            if message.text.lower() != "назад":
+                await state.update_data(type_position=message.text)
+                await state.set_state(Form.photo)
+                await message.answer("Отправьте 1-3 фото", reply_markup=kb.cancel_kb)
+            else:
+                await state.set_state(Form.position)
 
         @router.message(Form.photo)
         async def photo(message: Message, state: FSMContext):
-            await state.update_data(photo=message.photo[-1].file_id)
-            await state.set_state(Form.phone)
-            await message.answer("Введите свой контактный номер")
+            if message.text.lower() != "назад":
+                await state.update_data(photo=message.photo[-1].file_id)
+                await state.set_state(Form.phone)
+                await message.answer("Введите свой контактный номер", reply_markup=kb.cancel_kb)
+            else:
+                await state.set_state(Form.type_position)
 
         @router.message(Form.phone)
         async def phone(message: Message, state: FSMContext):
-            if message.text.isdigit():
-                await state.update_data(phone=message.text)
-                await state.set_state(Form.description)
-                await message.answer("Введите описание")
+            if message.text.lower() != "назад":
+                if message.text.isdigit():
+                    await state.update_data(phone=message.text)
+                    await state.set_state(Form.description)
+                    await message.answer("Введите описание", reply_markup=kb.cancel_kb)
+                else:
+                    await message.answer("Введите правильный контактный номер")
             else:
-                await message.answer("Введите правильный контактный номер")
+                await state.set_state(Form.photo)
 
         @router.message(Form.description)
         async def description(message: Message, state: FSMContext):
-            await state.update_data(description=message.text)
-            await state.set_state(Form.min_money)
-            await message.answer("Введите минимальную цену")
+            if message.text.lower() != "назад":
+                await state.update_data(description=message.text)
+                await state.set_state(Form.min_money)
+                await message.answer("Введите минимальную цену", reply_markup=kb.cancel_kb)
+            else:
+                await state.set_state(Form.phone)
 
         @router.message(Form.min_money)
         async def min_money(message: Message, state: FSMContext):
-            if message.text.isdigit():
-                await state.update_data(min_money=message.text)
-                await state.set_state(Form.max_money)
-                await message.answer("Введите максимальную цену")
+            if message.text.lower() != "назад":
+                if message.text.isdigit():
+                    await state.update_data(min_money=message.text)
+                    await state.set_state(Form.max_money)
+                    await message.answer("Введите максимальную цену", reply_markup=kb.cancel_kb)
+                else:
+                    await message.answer("Введите правильную минимальную цену")
             else:
-                await message.answer("Введите правильную минимальную цену")
+                await state.set_state(Form.description)
 
         @router.message(Form.max_money)
         async def max_money(message: Message, state: FSMContext):
-            if message.text.isdigit():
-                await state.update_data(max_money=message.text)
-                await state.set_state(Form.geo_position)
-                await message.answer("Введите ссылку на геопозицию")
+            if message.text.lower() != "назад":
+                if message.text.isdigit():
+                    await state.update_data(max_money=message.text)
+                    await state.set_state(Form.adres)
+                    await message.answer("Введите адрес в формате 'Город, улица, дом'", reply_markup=kb.cancel_kb)
+                else:
+                    await message.answer("Введите правильную максимальную цену")
             else:
-                await message.answer("Введите правильную максимальную цену")
+                await state.set_state(Form.min_money)
 
-        @router.message(Form.geo_position)
+        @router.message(Form.adres)
         async def geo_position(message: Message, state: FSMContext):
-            await state.update_data(geo_position=message.text)
-            await state.set_state(Form.get_district)
-            await message.answer("Выберите район",
-                                 reply_markup=profile(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]))
+            if message.text.lower() != "назад":
+                await state.update_data(geo_position=message.text)
+                await state.set_state(Form.get_district)
+                await message.answer("Выберите район", reply_markup=profile(
+                    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Отмена"]))
+            else:
+                await state.set_state(Form.max_money)
 
         @router.message(Form.get_district)
         async def get_distriction(message: Message, state: FSMContext):
-            await state.update_data(get_distriction=message.text)
-            data = await state.get_data()
-            await state.clear()
-            await message.answer("Вы прошли опрос, ваша заявка отправлена на модерацию", reply_markup=kb.rmk)
+            if message.text.lower() != "назад":
+                await state.update_data(get_distriction=message.text)
+                data = await state.get_data()
+                await state.clear()
+                await message.answer("Вы прошли опрос, ваша заявка отправлена на модерацию", reply_markup=kb.cancel_kb)
 
-            formatted_text = []
-            [
-                formatted_text.append(f"{key}: {value}")
-                for key, value in data.items()
-            ]
-            await message.answer(f"{formatted_text}")
-
+                formatted_text = []
+                [
+                    formatted_text.append(f"{key}: {value}")
+                    for key, value in data.items()
+                ]
+                await message.answer(f"{formatted_text}")
+            else:
+                await state.set_state(Form.adres)
