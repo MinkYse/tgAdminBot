@@ -5,7 +5,8 @@ from .models import (
     Seller,
     Service,
     Hotel,
-    Region
+    Region,
+    Category
 )
 
 
@@ -44,6 +45,11 @@ class HotelAdmin(admin.ModelAdmin):
     list_display = ('name', 'owner', 'address', 'region', 'description', 'phone_number', 'price', 'category', 'is_active')
     search_fields = ('name', 'address', 'region', 'phone_number', 'category',)
     list_filter = ('region', 'category')
+
+    def get_form(self, request, *args, **kwargs):
+        form = super().get_form(request, *args, **kwargs)
+        form.base_fields['category'].queryset = Category.objects.filter(type='Отели')
+        return form
 
     @admin.display(description='Диапазон цен')
     def price(self, obj):
