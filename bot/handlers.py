@@ -103,10 +103,10 @@ async def Bus(clbk: CallbackQuery, state: FSMContext):
 async def cor2(clbk: CallbackQuery, state: FSMContext):
     c = clbk.data
     await state.update_data(position=clbk.data)
-    if c == "Hotel":
+    if c == "Размещение":
         await state.set_state(Form.check_position_hotel)
         await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
-    elif c == "Service":
+    elif c == "Услуга":
         await state.set_state(Form.check_position_service)
         await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
 

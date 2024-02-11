@@ -13,8 +13,8 @@ menu = InlineKeyboardMarkup(inline_keyboard=menu)
 
 wh_bus = [
     [
-        InlineKeyboardButton(text="Размещение", callback_data="Hotel"),
-        InlineKeyboardButton(text="Услуга", callback_data="Service")
+        InlineKeyboardButton(text="Размещение", callback_data="Размещение"),
+        InlineKeyboardButton(text="Услуга", callback_data="Услуга")
     ]
 ]
 wh_bus = InlineKeyboardMarkup(inline_keyboard=wh_bus)
