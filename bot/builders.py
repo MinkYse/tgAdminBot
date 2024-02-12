@@ -1,5 +1,6 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton, InlineKeyboardMarkup
 
+
 def profile(text: str | list):
     builder = InlineKeyboardBuilder()
 
@@ -9,6 +10,7 @@ def profile(text: str | list):
     [builder.button(text=txt, callback_data=f"{txt}") for txt in text]
     return builder.as_markup()
 
+
 def create_keyboard(data: list):
     inline_list = []
     for el in data:
@@ -17,3 +19,13 @@ def create_keyboard(data: list):
         inline_keyboard=inline_list
     )
     return my_keyboard
+
+
+def create_admin_keyboard(id):
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text='Согласовать', callback_data=f'agree-{id}')],
+            [InlineKeyboardButton(text='Отказать', callback_data=f'discard-{id}')]
+        ]
+    )
+    return keyboard

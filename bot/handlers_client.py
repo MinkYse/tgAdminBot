@@ -1,21 +1,24 @@
 from aiogram import Router, F
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
-import keyboards_client as kb
-from builders import profile
-from states_client import Form
+import bot.keyboards_client as kb
+from bot.builders import profile
+from bot.states_client import ClientForm
+from bot.states import Form
+from bot.builders import create_keyboard
 
-router = Router()
+client_router = Router()
+
 
 @router.message(Command("start"))
 async def start(message: Message, state: FSMContext):
     await state.set_state(Form.position)
     await message.answer("Здравствуйте, выберите, что ищите", reply_markup=kb.main_kb)
 
+
 @router.message(F.text == "Услуга")
-@router.message(F.text == "Размещение")
 async def position(message: Message, state: FSMContext):
     msg = message.text.lower()
     if msg == "размещение":
@@ -106,3 +109,65 @@ async def position(message: Message, state: FSMContext):
             await message.answer(f"{formatted_text}")
 
 
+@client_router.callback_query(ClientForm.check_who)
+async def prov1(clbk: CallbackQuery, state: FSMContext):
+    if clbk.data == "continue":
+        await state.set_state(ClientForm.correct_position)
+        await clbk.message.answer("Что вас интересует?", reply_markup=kb.main_kb)
+    elif clbk.data == "back":
+        await clbk.message.answer("Кто ты воин?", reply_markup=kb.menu)
+        await state.set_state(Form.correct_who)
+
+
+@client_router.callback_query(ClientForm.correct_position)
+async def cor2(clbk: CallbackQuery, state: FSMContext):
+    c = clbk.data
+    await state.update_data(position=clbk.data)
+    if c == "Размещение":
+        await state.set_state(ClientForm.check_position_hotel)
+        await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+    elif c == "Услуга":
+        await state.set_state(Form.check_position_service)
+        await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+
+
+@client_router.callback_query(ClientForm.check_position_service)
+async def prov2(clbk: CallbackQuery, state: FSMContext):
+    if clbk.data == "continue":
+        await state.update_data(username=clbk.from_user.username)
+        await state.set_state(Form.correct_type_position_service)
+        list_categories = await get_categories('Услуги')
+        await clbk.message.answer("Выберите тип услуги", reply_markup=create_keyboard(list_categories))
+    elif clbk.data == "back":
+        await clbk.message.answer("Введите, что вы хотите добавить?", reply_markup=kb.wh_bus)
+        await state.set_state(Form.correct_position)
+
+@router.callback_query(Form.check_position_hotel)
+async def prov2(clbk: CallbackQuery, state: FSMContext):
+    if clbk.data == "continue":
+        await state.update_data(username=clbk.from_user.username)
+        await state.set_state(Form.correct_type_position)
+        list_categories = await get_categories('Отели')
+        await clbk.message.answer("Выберите тип размещения", reply_markup=create_keyboard(list_categories))
+    elif clbk.data == "back":
+        await clbk.message.answer("Введите, что вы хотите добавить?", reply_markup=kb.wh_bus)
+        await state.set_state(Form.correct_position)
+
+
+@router.callback_query(Form.correct_type_position_service)
+async def cor3(clbk: CallbackQuery, state: FSMContext):
+    await state.update_data(type_position=clbk.data)
+    c = clbk.data
+    await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+    await state.set_state(Form.check_type_position_service)
+
+
+@router.callback_query(Form.check_type_position_service)
+async def prov3(clbk: CallbackQuery, state: FSMContext):
+    if clbk.data == "continue":
+        await state.set_state(Form.correct_name)
+        await clbk.message.answer("Введите название фирмы")
+    elif clbk.data == "back":
+        list_categories = await get_categories('Услуги')
+        await clbk.message.answer("Выберите тип услуги", reply_markup=create_keyboard(list_categories))
+        await state.set_state(Form.correct_type_position_service)
