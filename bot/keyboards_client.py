@@ -1,44 +1,58 @@
 from aiogram.types import (ReplyKeyboardMarkup,
                            KeyboardButton,
-                           ReplyKeyboardRemove)
+                           ReplyKeyboardRemove,
+                           InlineKeyboardButton,
+                           InlineKeyboardMarkup)
 
-main_kb = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="Размещение")],
-        [KeyboardButton(text="Услуга")]
-    ],
-    resize_keyboard=True
-)
+wh_bus = [
+    [
+        InlineKeyboardButton(text="Размещение", callback_data="Размещение"),
+        InlineKeyboardButton(text="Услуга", callback_data="Услуга")
+    ]
+]
+wh_bus = InlineKeyboardMarkup(inline_keyboard=wh_bus)
 
-hotel_kb = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text="Усадьба"),
-            KeyboardButton(text="База отдыха"),
-            KeyboardButton(text="Аренда коттеджей")
-        ],
-        [
-            KeyboardButton(text="Гостевой дом"),
-            KeyboardButton(text="Турбаза"),
-            KeyboardButton(text="Шал*")
-        ]
+hotel = [
+    [
+        InlineKeyboardButton(text="Усадьба"),
+        InlineKeyboardButton(text="База отдыха"),
+        InlineKeyboardButton(text="Аренда коттеджей")
     ],
-    resize_keyboard=True
-)
+    [
+        InlineKeyboardButton(text="Гостевой дом"),
+        InlineKeyboardButton(text="Турбаза"),
+        InlineKeyboardButton(text="Шале")
+    ]
+]
+hotel = InlineKeyboardMarkup(inline_keyboard=hotel)
 
-service_kb = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text="Рафтинг/сплавы"),
-            KeyboardButton(text="Квадроциклы")
-        ],
-        [
-            KeyboardButton(text="Гид"),
-            KeyboardButton(text="Маршрут"),
-            KeyboardButton(text="Экскурсия")
-        ]
+service = [
+    [
+        InlineKeyboardButton(text="Рафтинг/сплавы"),
+        InlineKeyboardButton(text="Квадроциклы")
     ],
-    resize_keyboard=True
-)
+    [
+        InlineKeyboardButton(text="Гид"),
+        InlineKeyboardButton(text="Маршрут"),
+        InlineKeyboardButton(text="Экскурсия")
+    ]
+]
+service = InlineKeyboardMarkup(inline_keyboard=service)
+
+
+check = [
+    [
+        InlineKeyboardButton(text="Продолжить", callback_data="continue"),
+        InlineKeyboardButton(text="Отмена", callback_data="back")
+    ]
+]
+check = InlineKeyboardMarkup(inline_keyboard=check)
 
 rmk = ReplyKeyboardRemove()
+
+da = [
+    [
+        InlineKeyboardButton(text = "Да", callback_data="da")
+    ]
+]
+da = InlineKeyboardMarkup(inline_keyboard=da)
