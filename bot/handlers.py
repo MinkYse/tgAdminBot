@@ -83,7 +83,7 @@ async def cor1(clbk: CallbackQuery, state: FSMContext):
     await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
     if clbk.data == 'Клиент':
         await state.update_data(who=clbk.data)
-        await state.set_state(ClientForm.)
+        await state.set_state(ClientForm.check_who)
     else:
         await state.update_data(who=clbk.data)
         await state.set_state(Form.check_who)
