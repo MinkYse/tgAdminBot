@@ -21,11 +21,30 @@ def create_keyboard(data: list):
     return my_keyboard
 
 
-def create_admin_keyboard(id):
+def create_admin_keyboard(id, type):
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text='Согласовать', callback_data=f'agree-{id}')],
-            [InlineKeyboardButton(text='Отказать', callback_data=f'discard-{id}')]
+            [InlineKeyboardButton(text='Согласовать', callback_data=f'agree-{id}-{type}')],
+            [InlineKeyboardButton(text='Отказать', callback_data=f'discard-{id}-{type}')]
         ]
     )
+    return keyboard
+
+
+def client_keyboard(user_id, product_id, position):
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text='Согласовать', callback_data=f'offer-{user_id}-{product_id}-{position}')]
+        ]
+    )
+    return keyboard
+
+
+def confirm_keyboard(user_id, user_name, position):
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text='Подтвердить', callback_data=f'confirm-{user_id}-{user_name}-{position}')]
+        ]
+    )
+    print(f'confirm-{user_id}-{user_name}-{position}')
     return keyboard

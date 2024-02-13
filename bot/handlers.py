@@ -73,7 +73,7 @@ async def start(message: Message, state: FSMContext):
 
 @router.callback_query(Form.who)
 async def who(clbk: CallbackQuery, state: FSMContext):
-    await clbk.message.answer("Кто ты воин?", reply_markup=kb.menu)
+    await clbk.message.answer("Выберите свою роль", reply_markup=kb.menu)
     await state.set_state(Form.correct_who)
 
 
@@ -95,7 +95,7 @@ async def prov1(clbk: CallbackQuery, state: FSMContext):
         await state.set_state(Form.correct_position)
         await clbk.message.answer("Введите, что вы хотите добавить?", reply_markup=kb.wh_bus)
     elif clbk.data == "back":
-        await clbk.message.answer("Кто ты воин?", reply_markup=kb.menu)
+        await clbk.message.answer("Выберите свою роль", reply_markup=kb.menu)
         await state.set_state(Form.correct_who)
 
 
@@ -340,7 +340,8 @@ async def prov11(clbk: CallbackQuery, state: FSMContext, bot: Bot):
         data = await state.get_data()
         await state.clear()
         await clbk.message.answer("Вы прошли опрос, ваша заявка отправлена на модерацию")
-        if data['type_position'] == 'Размещение':
+        print(data)
+        if data['position'] == 'Размещение':
             hotel = Hotel()
             product_id = await create_product(hotel, data)
         else:
@@ -353,14 +354,14 @@ async def prov11(clbk: CallbackQuery, state: FSMContext, bot: Bot):
         await bot.send_message(chat_id='-4190766673',
                                text='<b>Созданно новое предложение!</b>\n\n'
                                     f'Номер заказа: {product_id}\n'
-                                    f'Название отеля: Тест\n'
+                                    f'Название отеля: {data["name"]}\n'
                                     f'Описание: {data["description"]}\n'
                                     f'Минимальная цена: {data["min_money"]}\n'
                                     f'Максимальная цена: {data["max_money"]}\n'
                                     f'Тип размещения: {data["type_position"]}\n'
                                     f'Адрес: {data["geo_position"]}\n'
                                     f'Район размещения: {data["get_distriction"]}',
-                               reply_markup=create_admin_keyboard(product_id)
+                               reply_markup=create_admin_keyboard(product_id, data['position'])
                                )
         await clbk.message.answer('Опрос пройден, ваша заявка отправлена на модерацию!')
     elif clbk.data == "back":
