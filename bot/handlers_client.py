@@ -56,7 +56,7 @@ def get_service_by_id(product_id):
 
 @sync_to_async
 def get_hotel_by_region_and_type(region, category):
-    products = Hotel.objects.filter(region__name=region, category__name=category)
+    products = Hotel.objects.filter(region__name=region, category__name=category, is_active=True)
     product_list = []
     for product in products:
         data = {
@@ -71,7 +71,7 @@ def get_hotel_by_region_and_type(region, category):
 
 @sync_to_async
 def get_service_by_region_and_type(region, category):
-    products = Service.objects.filter(region__name=region, category__name=category)
+    products = Service.objects.filter(region__name=region, category__name=category, is_active=True)
     product_list = []
     for product in products:
         data = {
@@ -94,6 +94,7 @@ def get_regions():
     all_regions = Region.objects.all()
     return [region.name for region in all_regions]
 
+
 @client_router.callback_query(ClientForm.check_who)
 async def prov1(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
@@ -102,6 +103,7 @@ async def prov1(clbk: CallbackQuery, state: FSMContext):
     elif clbk.data == "back":
         await clbk.message.answer("Выберите свою роль", reply_markup=kb.menu)
         await state.set_state(Form.correct_who)
+
 
 @client_router.callback_query(ClientForm.correct_position)
 async def cor2(clbk: CallbackQuery, state: FSMContext):
@@ -114,6 +116,7 @@ async def cor2(clbk: CallbackQuery, state: FSMContext):
         await state.set_state(ClientForm.check_position_service)
         await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
 
+
 @client_router.callback_query(ClientForm.check_position_service)
 async def prov2(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
@@ -124,6 +127,7 @@ async def prov2(clbk: CallbackQuery, state: FSMContext):
     elif clbk.data == "back":
         await clbk.message.answer("Выберите, что вы хотите?", reply_markup=kb.wh_bus)
         await state.set_state(ClientForm.correct_position)
+
 
 @client_router.callback_query(ClientForm.check_position_hotel)
 async def prov2(clbk: CallbackQuery, state: FSMContext):
@@ -276,7 +280,7 @@ async def prov7(clbk: CallbackQuery, state: FSMContext, bot: Bot):
         await clbk.message.answer("Мы отправили вашу заявку")
         data = await state.get_data()
         await state.clear()
-        if data['position']:
+        if data['position'] == 'Размещение':
             products = await get_hotel_by_region_and_type(data["district"], data['type_position'])
             for product in products:
                 await bot.send_message(

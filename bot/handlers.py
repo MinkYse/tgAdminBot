@@ -291,6 +291,7 @@ async def cor9(message: Message, state: FSMContext):
         await message.answer("Введите правильную максимальную цену")
 
 
+
 @router.callback_query(Form.check_max_money)
 async def prov9(clbk: CallbackQuery, state: CallbackQuery):
     if clbk.data == "continue":
@@ -340,7 +341,7 @@ async def prov11(clbk: CallbackQuery, state: FSMContext, bot: Bot):
         data = await state.get_data()
         await state.clear()
         await clbk.message.answer("Вы прошли опрос, ваша заявка отправлена на модерацию")
-        print(data)
+
         if data['position'] == 'Размещение':
             hotel = Hotel()
             product_id = await create_product(hotel, data)
@@ -348,8 +349,7 @@ async def prov11(clbk: CallbackQuery, state: FSMContext, bot: Bot):
             service = Service()
             product_id = await create_product(service, data)
 
-        media = [types.InputMediaPhoto(types='photo',
-                                       media=types.FSInputFile(fr'media/{ph}')) for ph in data['photos']]
+        media = [types.InputMediaPhoto(types='photo', media=types.FSInputFile(fr'media/{ph}')) for ph in data['photos']]
         await bot.send_media_group(chat_id='-4190766673', media=media)
         await bot.send_message(chat_id='-4190766673',
                                text='<b>Созданно новое предложение!</b>\n\n'
@@ -360,6 +360,7 @@ async def prov11(clbk: CallbackQuery, state: FSMContext, bot: Bot):
                                     f'Максимальная цена: {data["max_money"]}\n'
                                     f'Тип размещения: {data["type_position"]}\n'
                                     f'Адрес: {data["geo_position"]}\n'
+                                    f'Номер телефона: {data["phone"]}\n'
                                     f'Район размещения: {data["get_distriction"]}',
                                reply_markup=create_admin_keyboard(product_id, data['position'])
                                )
