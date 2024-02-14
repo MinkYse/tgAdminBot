@@ -25,3 +25,4 @@ class ClientForm(StatesGroup):
     check_count = State()
     check_count_service = State()
     choice = State()
+    new_wait = State()

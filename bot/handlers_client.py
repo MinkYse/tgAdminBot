@@ -5,6 +5,7 @@ from aiogram.fsm.context import FSMContext
 
 import re
 import bot.keyboards_client as kb
+import bot.Keyboards as kb_sec
 from bot.builders import profile
 from bot.states_client import ClientForm
 from bot.states import Form
@@ -95,14 +96,10 @@ def get_regions():
     return [region.name for region in all_regions]
 
 
-@client_router.callback_query(ClientForm.check_who)
-async def prov1(clbk: CallbackQuery, state: FSMContext):
-    if clbk.data == "continue":
-        await state.set_state(ClientForm.correct_position)
-        await clbk.message.answer("Выберите, что вы хотите?", reply_markup=kb.wh_bus)
-    elif clbk.data == "back":
-        await clbk.message.answer("Выберите свою роль", reply_markup=kb.menu)
-        await state.set_state(Form.correct_who)
+@client_router.message(F.text == "Сделать новый заказ")
+async def prov1(message: Message, state: FSMContext):
+    await state.set_state(ClientForm.correct_position)
+    await message.answer("Выберите, что вы хотите?", reply_markup=kb.wh_bus)
 
 
 @client_router.callback_query(ClientForm.correct_position)
@@ -277,7 +274,7 @@ async def cor7(clbk: CallbackQuery, state: FSMContext):
 @client_router.callback_query(ClientForm.check_district)
 async def prov7(clbk: CallbackQuery, state: FSMContext, bot: Bot):
     if clbk.data == "continue":
-        await clbk.message.answer("Мы отправили вашу заявку")
+        await clbk.message.answer("Мы отправили вашу заявку", reply_markup=kb_sec.client)
         data = await state.get_data()
         await state.clear()
         if data['position'] == 'Размещение':

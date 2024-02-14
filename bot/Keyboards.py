@@ -5,11 +5,11 @@ from aiogram.types import (ReplyKeyboardMarkup,
                            InlineKeyboardMarkup)
 menu = [
     [
-        InlineKeyboardButton(text="Клиент", callback_data="Клиент"),
-        InlineKeyboardButton(text="Предприниматель", callback_data="Предприниматель")
+        KeyboardButton(text="Клиент", callback_data="Клиент"),
+        KeyboardButton(text="Предприниматель", callback_data="Предприниматель")
     ]
 ]
-menu = InlineKeyboardMarkup(inline_keyboard=menu)
+menu = ReplyKeyboardMarkup(keyboard=menu, resize_keyboard=True)
 
 wh_bus = [
     [
@@ -63,3 +63,17 @@ da = [
     ]
 ]
 da = InlineKeyboardMarkup(inline_keyboard=da)
+
+client =[
+    [
+        KeyboardButton(text="Сделать новый заказ")
+    ]
+]
+client = ReplyKeyboardMarkup(keyboard=client, resize_keyboard=True, one_time_keyboard=True)
+
+bussiness = [
+    [
+        KeyboardButton(text="Разместить объявление")
+    ]
+]
+bussiness = ReplyKeyboardMarkup(keyboard=bussiness, resize_keyboard=True, one_time_keyboard=True)

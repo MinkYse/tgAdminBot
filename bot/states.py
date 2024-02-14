@@ -29,3 +29,4 @@ class Form(StatesGroup):
     check_address = State()
     correct_get_district = State()
     check_get_district = State()
+    new_wait = State()

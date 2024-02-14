@@ -66,37 +66,23 @@ def check_address(address):
 
 @router.message(Command("start"))
 async def start(message: Message, state: FSMContext):
-    await state.set_state(Form.who)
-    await message.answer("Здравствуйтe, вы готовы?", reply_markup=kb.da)
+    await message.answer("Здравствуйтe, выберите кем вы будете", reply_markup=kb.menu)
+    await state.set_state(Form.new_wait)
     await create_user(message)
 
-
-@router.callback_query(Form.who)
-async def who(clbk: CallbackQuery, state: FSMContext):
-    await clbk.message.answer("Выберите свою роль", reply_markup=kb.menu)
-    await state.set_state(Form.correct_who)
-
-
-@router.callback_query(Form.correct_who)
-async def cor1(clbk: CallbackQuery, state: FSMContext):
-    c = clbk.data
-    await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
-    if clbk.data == 'Клиент':
-        await state.update_data(who=clbk.data)
-        await state.set_state(ClientForm.check_who)
+@router.message((F.text == "Клиент") | (F.text == "Предприниматель"))
+async def get_info(message: Message, state: FSMContext):
+    if(message.text == "Клиент"):
+        await state.set_state(ClientForm.new_wait)
+        await message.answer("Отлично, выбор сделан", reply_markup=kb.client)
     else:
-        await state.update_data(who=clbk.data)
-        await state.set_state(Form.check_who)
+        await message.answer("Отлично, выбор сделан", reply_markup=kb.bussiness)
 
 
-@router.callback_query(Form.check_who)
-async def prov1(clbk: CallbackQuery, state: FSMContext):
-    if clbk.data == "continue":
-        await state.set_state(Form.correct_position)
-        await clbk.message.answer("Введите, что вы хотите добавить?", reply_markup=kb.wh_bus)
-    elif clbk.data == "back":
-        await clbk.message.answer("Выберите свою роль", reply_markup=kb.menu)
-        await state.set_state(Form.correct_who)
+@router.message(F.text == "Разместить объявление")
+async def prov1(message: Message, state: FSMContext):
+    await state.set_state(Form.correct_position)
+    await message.answer("Введите, что вы хотите добавить?", reply_markup=kb.wh_bus)
 
 
 @router.callback_query(Form.correct_position)
@@ -364,7 +350,7 @@ async def prov11(clbk: CallbackQuery, state: FSMContext, bot: Bot):
                                     f'Район размещения: {data["get_distriction"]}',
                                reply_markup=create_admin_keyboard(product_id, data['position'])
                                )
-        await clbk.message.answer('Опрос пройден, ваша заявка отправлена на модерацию!')
+        await clbk.message.answer('Опрос пройден, ваша заявка отправлена на модерацию!', reply_markup=kb.bussiness)
     elif clbk.data == "back":
         all_regions = await get_regions()
         await clbk.message.answer("Выберите район", reply_markup=create_keyboard(all_regions))
