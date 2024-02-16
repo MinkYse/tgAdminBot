@@ -2,7 +2,6 @@ from aiogram import Router, F, types, Bot
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-import phonenumbers
 
 from typing import List
 import uuid
@@ -10,7 +9,7 @@ import re
 from asgiref.sync import sync_to_async
 
 import bot.Keyboards as kb
-from bot.builders import profile, create_keyboard, create_admin_keyboard
+from bot.builders import create_keyboard, create_admin_keyboard
 from bot.states import Form
 from bot.states_client import ClientForm
 from bot.models import Seller, Category, Region, Hotel, Service

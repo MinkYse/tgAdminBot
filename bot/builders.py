@@ -46,5 +46,4 @@ def confirm_keyboard(user_id, user_name, position):
             [InlineKeyboardButton(text='Подтвердить', callback_data=f'confirm-{user_id}-{user_name}-{position}')]
         ]
     )
-    print(f'confirm-{user_id}-{user_name}-{position}')
     return keyboard

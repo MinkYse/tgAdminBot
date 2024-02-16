@@ -1,14 +1,11 @@
 from aiogram import Router, F, Bot
 from aiogram.types import Message, CallbackQuery, FSInputFile, InputMediaPhoto
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
 import re
 import bot.keyboards_client as kb
 import bot.Keyboards as kb_sec
-from bot.builders import profile
 from bot.states_client import ClientForm
-from bot.states import Form
 from bot.builders import create_keyboard, client_keyboard, confirm_keyboard
 from asgiref.sync import sync_to_async
 from bot.models import Category, Region, Service, Hotel
@@ -36,7 +33,9 @@ def get_hotel_by_id(product_id):
         'description': result.description,
         'phone': result.phone_number,
         'owner': result.owner.tg_id,
-        'address': result.address
+        'address': result.address,
+        'min_price': result.min_price,
+        'max_price': result.max_price
     }
     return data
 
@@ -50,14 +49,26 @@ def get_service_by_id(product_id):
         'description': result.description,
         'phone': result.phone_number,
         'owner': result.owner.tg_id,
-        'address': result.address
+        'address': result.address,
+        'min_price': result.min_price,
+        'max_price': result.max_price
     }
     return data
 
 
 @sync_to_async
 def get_hotel_by_region_and_type(region, category):
-    products = Hotel.objects.filter(region__name=region, category__name=category, is_active=True)
+
+    if region == 'Искать во всех районах':
+        if category == 'Любой тип размещения':
+            products = Hotel.objects.filter(is_active=True)
+        else:
+            products = Hotel.objects.filter(category__name=category, is_active=True)
+    else:
+        if category == 'Любой тип размещения':
+            products = Hotel.objects.filter(region__name=region, is_active=True)
+        else:
+            products = Hotel.objects.filter(region__name=region, category__name=category, is_active=True)
     product_list = []
     for product in products:
         data = {
@@ -72,7 +83,10 @@ def get_hotel_by_region_and_type(region, category):
 
 @sync_to_async
 def get_service_by_region_and_type(region, category):
-    products = Service.objects.filter(region__name=region, category__name=category, is_active=True)
+    if region == 'Искать во всех регионах':
+        products = Service.objects.filter(category__name=category, is_active=True)
+    else:
+        products = Service.objects.filter(region__name=region, category__name=category, is_active=True)
     product_list = []
     for product in products:
         data = {
@@ -132,6 +146,7 @@ async def prov2(clbk: CallbackQuery, state: FSMContext):
         await state.update_data(username=clbk.from_user.username)
         await state.set_state(ClientForm.correct_type_position_hotel)
         list_categories = await get_categories('Отели')
+        list_categories.append('Любой тип размещения')
         await clbk.message.answer("Выберите тип размещения", reply_markup=create_keyboard(list_categories))
     elif clbk.data == "back":
         await clbk.message.answer("Выберите, что вы хотите?", reply_markup=kb.wh_bus)
@@ -168,6 +183,7 @@ async def prov3(clbk: CallbackQuery, state: FSMContext):
         await clbk.message.answer("Введите количество человек")
     elif clbk.data == "back":
         list_categories = await get_categories('Отели')
+        list_categories.append('Любой тип размещения')
         await clbk.message.answer("Выберите тип размещения", reply_markup=create_keyboard(list_categories))
         await state.set_state(ClientForm.correct_type_position_hotel)
 
@@ -249,6 +265,7 @@ async def prov6(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(ClientForm.correct_district)
         all_regions = await get_regions()
+        all_regions.append('Искать во всех районах')
         await clbk.message.answer("Выберите район", reply_markup=create_keyboard(all_regions))
     elif clbk.data == "back":
         await clbk.message.answer("Введите дату выселения")
@@ -259,6 +276,7 @@ async def prov6(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(ClientForm.correct_district)
         all_regions = await get_regions()
+        all_regions.append('Искать во всех районах')
         await clbk.message.answer("Выберите район", reply_markup=create_keyboard(all_regions))
     elif clbk.data == "back":
         await clbk.message.answer("Введите желаемую дату")
@@ -302,9 +320,9 @@ async def prov7(clbk: CallbackQuery, state: FSMContext, bot: Bot):
                                                  product_id=product['product_id'],
                                                  position=data['position'])
                 )
-        print(clbk.from_user.id)
     elif clbk.data == "back":
         all_regions = await get_regions()
+        all_regions.append('Искать во всех районах')
         await clbk.message.answer("Выберите район", reply_markup=create_keyboard(all_regions))
         await state.set_state(ClientForm.correct_district)
 
@@ -312,8 +330,6 @@ async def prov7(clbk: CallbackQuery, state: FSMContext, bot: Bot):
 @client_router.callback_query(F.data.startswith('offer'))
 async def admin_agree(call: CallbackQuery, bot: Bot):
     data = call.data.split('-')
-    print(data)
-    print()
     if data[3] == 'Размещение':
         product = await get_hotel_by_id(data[2])
     else:
@@ -325,7 +341,8 @@ async def admin_agree(call: CallbackQuery, bot: Bot):
     await bot.send_media_group(chat_id=data[1], media=media)
     await bot.send_message(chat_id=data[1], text=f'<b>{product["name"]} одобряет вашу заявку</b>\n\n'
                            f'Описание: {product["description"]}\n'
-                           f'Номер телефона: {product["phone"]}'
+                           f'Номер телефона: {product["phone"]}\n'
+                           f'Цена: от {product["min_price"]} до {product["max_price"]}\n'                      
                            f'Адрес: https://yandex.ru/maps/?text={product["address"]}',
                            reply_markup=confirm_keyboard(product['owner'], call.from_user.username, product['name']))
 
@@ -333,7 +350,5 @@ async def admin_agree(call: CallbackQuery, bot: Bot):
 @client_router.callback_query(F.data.startswith('confirm'))
 async def confirm_client(call: CallbackQuery, bot: Bot):
     data = call.data.split('-')
-    print('Работает')
-    print(data)
     await call.message.delete_reply_markup()
     await bot.send_message(chat_id=data[1], text=f'<b>Пользователь {call.from_user.username} подтвердил своё бронирование вашего отеля {data[3]}</b>')

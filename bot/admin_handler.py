@@ -1,5 +1,4 @@
 from aiogram import Router, F, types, Bot
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from bot.models import Hotel, Service
 
