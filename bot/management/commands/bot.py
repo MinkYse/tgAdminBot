@@ -1,14 +1,6 @@
 import asyncio
-# import os
-# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
-#
-# import django
-# django.setup()
-#
-# from django.core.management import call_command
 
 from django.core.management.base import BaseCommand
-from django.conf import settings
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.enums.parse_mode import ParseMode

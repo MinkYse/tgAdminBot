@@ -12,8 +12,9 @@ import bot.Keyboards as kb
 from bot.builders import create_keyboard, create_admin_keyboard
 from bot.states import Form
 from bot.states_client import ClientForm
-from bot.models import Seller, Category, Region, Hotel, Service
+from bot.models import Seller, Category, Region, Hotel, Service, Client
 from aiogram_media_group import media_group_handler
+from constants import *
 
 router = Router()
 
@@ -35,8 +36,16 @@ def create_product(product, data):
 
 
 @sync_to_async
-def create_user(message):
+def create_seller(message):
     Seller.objects.get_or_create(
+        username=message.from_user.username,
+        tg_id=message.from_user.id
+    )
+
+
+@sync_to_async
+def create_client(message):
+    Client.objects.get_or_create(
         username=message.from_user.username,
         tg_id=message.from_user.id
     )
@@ -63,25 +72,37 @@ def check_address(address):
         return False
 
 
+def validate_phone_number(phone_number):
+    # Удаление всех символов, кроме цифр
+    phone_number = ''.join(c for c in phone_number if c.isdigit())
+    print(phone_number)
+
+    pattern = r'^[7-9]\d{10}$'
+
+    # Проверка номера
+    return bool(re.match(pattern, phone_number))
+
+
 @router.message(Command("start"))
 async def start(message: Message, state: FSMContext):
-    await message.answer("Здравствуйтe, выберите кем вы будете", reply_markup=kb.menu)
+    await message.answer(WELCOME, reply_markup=kb.menu)
     await state.set_state(Form.new_wait)
-    await create_user(message)
+
 
 @router.message((F.text == "Клиент") | (F.text == "Предприниматель"))
 async def get_info(message: Message, state: FSMContext):
-    if(message.text == "Клиент"):
-        await state.set_state(ClientForm.new_wait)
-        await message.answer("Отлично, выбор сделан", reply_markup=kb.client)
+    if message.text == "Клиент":
+        await create_client(message)
+        await message.answer(INFO, reply_markup=kb.client)
     else:
-        await message.answer("Отлично, выбор сделан", reply_markup=kb.bussiness)
+        await create_seller(message)
+        await message.answer(INFO, reply_markup=kb.bussiness)
 
 
 @router.message(F.text == "Разместить объявление")
 async def prov1(message: Message, state: FSMContext):
     await state.set_state(Form.correct_position)
-    await message.answer("Введите, что вы хотите добавить?", reply_markup=kb.wh_bus)
+    await message.answer(CHOOSING_PRODUCT_TYPE, reply_markup=kb.wh_bus)
 
 
 @router.callback_query(Form.correct_position)
@@ -90,10 +111,10 @@ async def cor2(clbk: CallbackQuery, state: FSMContext):
     await state.update_data(position=clbk.data)
     if c == "Размещение":
         await state.set_state(Form.check_position_hotel)
-        await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+        await clbk.message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
     elif c == "Услуга":
         await state.set_state(Form.check_position_service)
-        await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+        await clbk.message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
 
 @router.callback_query(Form.check_position_service)
 async def prov2(clbk: CallbackQuery, state: FSMContext):
@@ -101,9 +122,9 @@ async def prov2(clbk: CallbackQuery, state: FSMContext):
         await state.update_data(username=clbk.from_user.username)
         await state.set_state(Form.correct_type_position_service)
         list_categories = await get_categories('Услуги')
-        await clbk.message.answer("Выберите тип услуги", reply_markup=create_keyboard(list_categories))
+        await clbk.message.answer(CHOOSING_SERVICE_CATEGORIES, reply_markup=create_keyboard(list_categories))
     elif clbk.data == "back":
-        await clbk.message.answer("Введите, что вы хотите добавить?", reply_markup=kb.wh_bus)
+        await clbk.message.answer(CHOOSING_PRODUCT_TYPE, reply_markup=kb.wh_bus)
         await state.set_state(Form.correct_position)
 
 @router.callback_query(Form.check_position_hotel)
@@ -112,9 +133,9 @@ async def prov2(clbk: CallbackQuery, state: FSMContext):
         await state.update_data(username=clbk.from_user.username)
         await state.set_state(Form.correct_type_position)
         list_categories = await get_categories('Отели')
-        await clbk.message.answer("Выберите тип размещения", reply_markup=create_keyboard(list_categories))
+        await clbk.message.answer(CHOOSING_HOTEL_CATEGORIES, reply_markup=create_keyboard(list_categories))
     elif clbk.data == "back":
-        await clbk.message.answer("Введите, что вы хотите добавить?", reply_markup=kb.wh_bus)
+        await clbk.message.answer(CHOOSING_PRODUCT_TYPE, reply_markup=kb.wh_bus)
         await state.set_state(Form.correct_position)
 
 
@@ -122,7 +143,7 @@ async def prov2(clbk: CallbackQuery, state: FSMContext):
 async def cor3(clbk: CallbackQuery, state: FSMContext):
     await state.update_data(type_position=clbk.data)
     c = clbk.data
-    await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+    await clbk.message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
     await state.set_state(Form.check_type_position_service)
 
 
@@ -130,10 +151,10 @@ async def cor3(clbk: CallbackQuery, state: FSMContext):
 async def prov3(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(Form.correct_name)
-        await clbk.message.answer("Введите название фирмы")
+        await clbk.message.answer(ENTER_SERVICE_NAME)
     elif clbk.data == "back":
         list_categories = await get_categories('Услуги')
-        await clbk.message.answer("Выберите тип услуги", reply_markup=create_keyboard(list_categories))
+        await clbk.message.answer(CHOOSING_SERVICE_CATEGORIES, reply_markup=create_keyboard(list_categories))
         await state.set_state(Form.correct_type_position_service)
 
 
@@ -141,7 +162,7 @@ async def prov3(clbk: CallbackQuery, state: FSMContext):
 async def cor3(clbk: CallbackQuery, state: FSMContext):
     await state.update_data(type_position=clbk.data)
     c = clbk.data
-    await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+    await clbk.message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
     await state.set_state(Form.check_type_position)
 
 
@@ -149,10 +170,10 @@ async def cor3(clbk: CallbackQuery, state: FSMContext):
 async def prov3(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(Form.correct_name)
-        await clbk.message.answer("Введите название отеля")
+        await clbk.message.answer(ENTER_HOTEL_NAME)
     elif clbk.data == "back":
         list_categories = await get_categories('Отели')
-        await clbk.message.answer("Выберите тип размещения", reply_markup=create_keyboard(list_categories))
+        await clbk.message.answer(CHOOSING_HOTEL_CATEGORIES, reply_markup=create_keyboard(list_categories))
         await state.set_state(Form.correct_type_position)
 
 
@@ -160,7 +181,7 @@ async def prov3(clbk: CallbackQuery, state: FSMContext):
 async def cor4(message: Message, state: FSMContext):
     c = message.text
     await state.update_data(name=c)
-    await message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+    await message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
     await state.set_state(Form.check_name)
 
 
@@ -168,9 +189,9 @@ async def cor4(message: Message, state: FSMContext):
 async def prov4(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(Form.photo_get)
-        await clbk.message.answer("Отправьте 1-3 фото")
+        await clbk.message.answer(SEND_PHOTO)
     elif clbk.data == "back":
-        await clbk.message.answer("Введите название отеля")
+        await clbk.message.answer(ENTER_HOTEL_NAME)
         await state.set_state(Form.correct_name)
 
 
@@ -183,7 +204,7 @@ async def photo(messages: List[types.Message], state: FSMContext):
         await m.bot.download(file=m.photo[-1].file_id, destination=f'media/{photo_name}')
         list_photo.append(photo_name)
     await state.update_data(photos=list_photo)
-    await messages[0].answer("Фото приняты, вы в них уверены?", reply_markup=kb.check)
+    await messages[0].answer(GET_MORE_PHOTO, reply_markup=kb.check)
     await state.set_state(Form.check_photo)
 
 
@@ -194,7 +215,7 @@ async def photo(message: Message, state: FSMContext):
     await message.bot.download(file=message.photo[-1].file_id, destination=f'media/{photo_name}')
     list_photo.append(photo_name)
     await state.update_data(photos=list_photo)
-    await message.answer("Фото приняты, вы в них уверены?", reply_markup=kb.check)
+    await message.answer(GET_ONE_PHOTO, reply_markup=kb.check)
     await state.set_state(Form.check_photo)
 
 
@@ -202,27 +223,30 @@ async def photo(message: Message, state: FSMContext):
 async def prov5(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(Form.correct_number)
-        await clbk.message.answer("Введите номер телефона")
+        await clbk.message.answer(SEND_NUMBER)
     elif clbk.data == "back":
-        await clbk.message.answer("Отправьте 1-3 фото")
+        await clbk.message.answer(SEND_PHOTO)
         await state.set_state(Form.photo_get)
 
 
 @router.message(Form.correct_number)
 async def cor6(message: Message, state: FSMContext):
     c = message.text
-    await state.update_data(phone=c)
-    await message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
-    await state.set_state(Form.check_number)
+    if validate_phone_number(c):
+        await state.update_data(phone=c)
+        await message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
+        await state.set_state(Form.check_number)
+    else:
+        await message.answer(CORRECT_NUMBER)
 
 
 @router.callback_query(Form.check_number)
 async def prov6(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
-        await clbk.message.answer("Введите описание")
+        await clbk.message.answer(SEND_DESCRIPTION)
         await state.set_state(Form.correct_description)
     elif clbk.data == "back":
-        await clbk.message.answer("Введите номер телефона")
+        await clbk.message.answer(SEND_NUMBER)
         await state.set_state(Form.correct_number)
 
 
@@ -230,7 +254,7 @@ async def prov6(clbk: CallbackQuery, state: FSMContext):
 async def cor7(message: Message, state: FSMContext):
     c = message.text
     await state.update_data(description=c)
-    await message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+    await message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
     await state.set_state(Form.check_description)
 
 
@@ -238,9 +262,9 @@ async def cor7(message: Message, state: FSMContext):
 async def prov7(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(Form.correct_min_money)
-        await clbk.message.answer("Введите минимальную цену")
+        await clbk.message.answer(SEND_MIN_PRICE)
     elif clbk.data == "back":
-        await clbk.message.answer("Введите описание")
+        await clbk.message.answer(SEND_DESCRIPTION)
         await state.set_state(Form.correct_description)
 
 
@@ -250,18 +274,18 @@ async def cor8(message: Message, state: FSMContext):
         c = message.text
         await state.update_data(min_money=c)
         await state.set_state(Form.check_min_money)
-        await message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+        await message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
     else:
-        await message.answer("Введите правильную минимальную цену")
+        await message.answer(CORRECT_PRICE)
 
 
 @router.callback_query(Form.check_min_money)
 async def prov8(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
-        await clbk.message.answer("Введите максимальную цену")
+        await clbk.message.answer(SEND_MAX_PRICE)
         await state.set_state(Form.correct_max_money)
     elif clbk.data == "back":
-        await clbk.message.answer("Введите минимальную цену")
+        await clbk.message.answer(SEND_MIN_PRICE)
         await state.set_state(Form.correct_min_money)
 
 
@@ -271,19 +295,19 @@ async def cor9(message: Message, state: FSMContext):
         c = message.text
         await state.update_data(max_money=c)
         await state.set_state(Form.check_max_money)
-        await message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+        await message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
     else:
-        await message.answer("Введите правильную максимальную цену")
+        await message.answer(CORRECT_PRICE)
 
 
 
 @router.callback_query(Form.check_max_money)
 async def prov9(clbk: CallbackQuery, state: CallbackQuery):
     if clbk.data == "continue":
-        await clbk.message.answer("Введите адрес в формате 'Город, улица, дом'")
+        await clbk.message.answer(SEND_ADDRESS)
         await state.set_state(Form.correct_address)
     elif clbk.data == "back":
-        await clbk.message.answer("Введите максимальную цену")
+        await clbk.message.answer(SEND_MAX_PRICE)
         await state.set_state(Form.correct_max_money)
 
 
@@ -295,20 +319,20 @@ async def cor10(message: Message, state: FSMContext):
     c = ', '.join(address_list)
     if check_address(c):
         await state.update_data(geo_position=c)
-        await message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+        await message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
         await state.set_state(Form.check_address)
     else:
-        await message.answer("Введите правильно адрес")
+        await message.answer(CORRECT_ADDRESS)
 
 
 @router.callback_query(Form.check_address)
 async def prov10(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         all_regions = await get_regions()
-        await clbk.message.answer("Выберите район", reply_markup=create_keyboard(all_regions))
+        await clbk.message.answer(CHOICE_REGION, reply_markup=create_keyboard(all_regions))
         await state.set_state(Form.correct_get_district)
     elif clbk.data == "back":
-        await clbk.message.answer("Введите адрес в формате 'Город, улица, дом'")
+        await clbk.message.answer(SEND_ADDRESS)
         await state.set_state(Form.correct_address)
 
 
@@ -316,7 +340,7 @@ async def prov10(clbk: CallbackQuery, state: FSMContext):
 async def cor11(clbk: CallbackQuery, state: FSMContext):
     c = clbk.data
     await state.update_data(get_distriction=c)
-    await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+    await clbk.message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
     await state.set_state(Form.check_get_district)
 
 
@@ -325,8 +349,6 @@ async def prov11(clbk: CallbackQuery, state: FSMContext, bot: Bot):
     if clbk.data == "continue":
         data = await state.get_data()
         await state.clear()
-        await clbk.message.answer("Вы прошли опрос, ваша заявка отправлена на модерацию")
-
         if data['position'] == 'Размещение':
             hotel = Hotel()
             product_id = await create_product(hotel, data)
@@ -349,9 +371,9 @@ async def prov11(clbk: CallbackQuery, state: FSMContext, bot: Bot):
                                     f'Район размещения: {data["get_distriction"]}',
                                reply_markup=create_admin_keyboard(product_id, data['position'])
                                )
-        await clbk.message.answer('Опрос пройден, ваша заявка отправлена на модерацию!', reply_markup=kb.bussiness)
+        await clbk.message.answer(SUCCESS_MESSAGE, reply_markup=kb.bussiness)
     elif clbk.data == "back":
         all_regions = await get_regions()
-        await clbk.message.answer("Выберите район", reply_markup=create_keyboard(all_regions))
+        await clbk.message.answer(CHOICE_REGION, reply_markup=create_keyboard(all_regions))
         await state.set_state(Form.correct_get_district)
 

@@ -9,6 +9,7 @@ from bot.states_client import ClientForm
 from bot.builders import create_keyboard, client_keyboard, confirm_keyboard
 from asgiref.sync import sync_to_async
 from bot.models import Category, Region, Service, Hotel
+from constants import *
 
 client_router = Router()
 
@@ -111,21 +112,21 @@ def get_regions():
 
 
 @client_router.message(F.text == "Сделать новый заказ")
-async def prov1(message: Message, state: FSMContext):
+async def new_order(message: Message, state: FSMContext):
     await state.set_state(ClientForm.correct_position)
-    await message.answer("Выберите, что вы хотите?", reply_markup=kb.wh_bus)
+    await message.answer(CHOICE_PRODUCT_CLIENT, reply_markup=kb.wh_bus)
 
 
 @client_router.callback_query(ClientForm.correct_position)
-async def cor2(clbk: CallbackQuery, state: FSMContext):
+async def handle_correct_position_callback(clbk: CallbackQuery, state: FSMContext):
     c = clbk.data
     await state.update_data(position=clbk.data)
     if c == "Размещение":
         await state.set_state(ClientForm.check_position_hotel)
-        await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+        await clbk.message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
     elif c == "Услуга":
         await state.set_state(ClientForm.check_position_service)
-        await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+        await clbk.message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
 
 
 @client_router.callback_query(ClientForm.check_position_service)
@@ -134,9 +135,9 @@ async def prov2(clbk: CallbackQuery, state: FSMContext):
         await state.update_data(username=clbk.from_user.username)
         await state.set_state(ClientForm.correct_type_position_service)
         list_categories = await get_categories('Услуги')
-        await clbk.message.answer("Выберите тип услуги", reply_markup=create_keyboard(list_categories))
+        await clbk.message.answer(CHOICE_SERVICE_TYPE_CLIENT, reply_markup=create_keyboard(list_categories))
     elif clbk.data == "back":
-        await clbk.message.answer("Выберите, что вы хотите?", reply_markup=kb.wh_bus)
+        await clbk.message.answer(CHOICE_PRODUCT_CLIENT, reply_markup=kb.wh_bus)
         await state.set_state(ClientForm.correct_position)
 
 
@@ -147,44 +148,44 @@ async def prov2(clbk: CallbackQuery, state: FSMContext):
         await state.set_state(ClientForm.correct_type_position_hotel)
         list_categories = await get_categories('Отели')
         list_categories.append('Любой тип размещения')
-        await clbk.message.answer("Выберите тип размещения", reply_markup=create_keyboard(list_categories))
+        await clbk.message.answer(CHOICE_HOTEL_TYPE_CLIENT, reply_markup=create_keyboard(list_categories))
     elif clbk.data == "back":
-        await clbk.message.answer("Выберите, что вы хотите?", reply_markup=kb.wh_bus)
+        await clbk.message.answer(CHOICE_PRODUCT_CLIENT, reply_markup=kb.wh_bus)
         await state.set_state(ClientForm.correct_position)
 
 @client_router.callback_query(ClientForm.correct_type_position_service)
 async def cor3(clbk: CallbackQuery, state: FSMContext):
     await state.update_data(type_position=clbk.data)
     c = clbk.data
-    await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+    await clbk.message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
     await state.set_state(ClientForm.check_type_position_service)
 
 @client_router.callback_query(ClientForm.correct_type_position_hotel)
 async def cor3(clbk: CallbackQuery, state: FSMContext):
     await state.update_data(type_position=clbk.data)
     c = clbk.data
-    await clbk.message.answer(f"Вы уверенны в своем выборе: {c}", reply_markup=kb.check)
+    await clbk.message.answer(f"{CHECK_MESSAGE}: {c}?", reply_markup=kb.check)
     await state.set_state(ClientForm.check_type_position_hotel)
 
 @client_router.callback_query(ClientForm.check_type_position_service)
 async def prov3(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(ClientForm.correct_count)
-        await clbk.message.answer("Введите количество людей")
+        await clbk.message.answer(ENTER_PEOPLE_SERVICE)
     elif clbk.data == "back":
         list_categories = await get_categories('Услуги')
-        await clbk.message.answer("Выберите тип услуги", reply_markup=create_keyboard(list_categories))
+        await clbk.message.answer(CHOICE_SERVICE_TYPE_CLIENT, reply_markup=create_keyboard(list_categories))
         await state.set_state(ClientForm.correct_type_position_service)
 
 @client_router.callback_query(ClientForm.check_type_position_hotel)
 async def prov3(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(ClientForm.correct_count)
-        await clbk.message.answer("Введите количество человек")
+        await clbk.message.answer(ENTER_PEOPLE_HOTEL)
     elif clbk.data == "back":
         list_categories = await get_categories('Отели')
         list_categories.append('Любой тип размещения')
-        await clbk.message.answer("Выберите тип размещения", reply_markup=create_keyboard(list_categories))
+        await clbk.message.answer(CHOICE_HOTEL_TYPE_CLIENT, reply_markup=create_keyboard(list_categories))
         await state.set_state(ClientForm.correct_type_position_hotel)
 
 @client_router.message(ClientForm.correct_count_service)
@@ -192,34 +193,34 @@ async def cor_count_service(message: Message, state:FSMContext):
     if message.text.isdigit():
         await state.update_data(count=message.text)
         await state.set_state(ClientForm.check_count_service)
-        await message.answer(f"Вы уверенны в своем выборе: {message.text}", reply_markup=kb.check)
+        await message.answer(f"{CHECK_MESSAGE}: {message.text}?", reply_markup=kb.check)
     else:
-        await message.answer("Введите правильное количество людей")
+        await message.answer(CORRECT_PEOPLE)
 @client_router.message(ClientForm.correct_count)
 async def cor_count(message: Message, state: FSMContext):
     if message.text.isdigit():
         await state.update_data(count=message.text)
         await state.set_state(ClientForm.check_count)
-        await message.answer(f"Вы уверенны в своем выборе: {message.text}", reply_markup=kb.check)
+        await message.answer(f"{CHECK_MESSAGE}: {message.text}?", reply_markup=kb.check)
     else:
-        await message.answer("Введите правильное количество людей")
+        await message.answer(CORRECT_PEOPLE)
 
 @client_router.callback_query(ClientForm.check_count_service)
 async def check_count_service(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(ClientForm.correct_data_service)
-        await clbk.message.answer("Введите желаемую дату")
+        await clbk.message.answer(ENTER_DATE_SERVICE)
     elif clbk.data == "back":
-        await clbk.message.answer("Введите количество человек")
+        await clbk.message.answer(ENTER_PEOPLE_SERVICE)
         await state.set_state(ClientForm.correct_count_service)
 
 @client_router.callback_query(ClientForm.check_count)
 async def check_count(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(ClientForm.correct_data)
-        await clbk.message.answer("Введите дату заселения")
+        await clbk.message.answer(ENTER_DATE_HOTEL_ONE)
     elif clbk.data == "back":
-        await clbk.message.answer("Введите количество человек")
+        await clbk.message.answer(ENTER_PEOPLE_HOTEL)
         await state.set_state(ClientForm.correct_count)
 
 
@@ -229,26 +230,26 @@ async def cor4(message: Message, state: FSMContext):
     if is_date(message.text):
         await state.update_data(data_first=message.text)
         await state.set_state(ClientForm.check_data)
-        await message.answer(f"Вы уверенны в своем выборе: {message.text}", reply_markup=kb.check)
+        await message.answer(f"{CHECK_MESSAGE}: {message.text}?", reply_markup=kb.check)
     else:
-        await message.answer("Введите правильную дату заселения")
+        await message.answer(CORRECT_DATE)
 
 @client_router.message(ClientForm.correct_data_service)
 async def cor4(message: Message, state: FSMContext):
     if is_date(message.text):
         await state.update_data(data_first=message.text)
         await state.set_state(ClientForm.check_data_service)
-        await message.answer(f"Вы уверенны в своем выборе: {message.text}", reply_markup=kb.check)
+        await message.answer(f"{CHECK_MESSAGE}: {message.text}?", reply_markup=kb.check)
     else:
-        await message.answer("Введите правильную дату")
+        await message.answer(CORRECT_DATE)
 
 @client_router.callback_query(ClientForm.check_data)
 async def prov5(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(ClientForm.correct_data_second)
-        await clbk.message.answer("Введите дату выселения")
+        await clbk.message.answer(ENTER_DATE_HOTEL_TWO)
     elif clbk.data == "back":
-        await clbk.message.answer("Введите дату заселения")
+        await clbk.message.answer(ENTER_DATE_HOTEL_ONE)
         await state.set_state(ClientForm.correct_data)
 
 @client_router.message(ClientForm.correct_data_second)
@@ -256,9 +257,9 @@ async def cor5(message: Message, state: FSMContext):
     if is_date(message.text):
         await state.update_data(data_second=message.text)
         await state.set_state(ClientForm.check_data_second)
-        await message.answer(f"Вы уверенны в своем выборе: {message.text}", reply_markup=kb.check)
+        await message.answer(f"{CHECK_MESSAGE}: {message.text}?", reply_markup=kb.check)
     else:
-        await message.answer("Введите правильную дату")
+        await message.answer(CORRECT_DATE)
 
 @client_router.callback_query(ClientForm.check_data_second)
 async def prov6(clbk: CallbackQuery, state: FSMContext):
@@ -266,9 +267,9 @@ async def prov6(clbk: CallbackQuery, state: FSMContext):
         await state.set_state(ClientForm.correct_district)
         all_regions = await get_regions()
         all_regions.append('Искать во всех районах')
-        await clbk.message.answer("Выберите район", reply_markup=create_keyboard(all_regions))
+        await clbk.message.answer(CHOICE_REGION_CLIENT, reply_markup=create_keyboard(all_regions))
     elif clbk.data == "back":
-        await clbk.message.answer("Введите дату выселения")
+        await clbk.message.answer(ENTER_DATE_HOTEL_TWO)
         await state.set_state(ClientForm.correct_data_second)
 
 @client_router.callback_query(ClientForm.check_data_service)
@@ -277,22 +278,22 @@ async def prov6(clbk: CallbackQuery, state: FSMContext):
         await state.set_state(ClientForm.correct_district)
         all_regions = await get_regions()
         all_regions.append('Искать во всех районах')
-        await clbk.message.answer("Выберите район", reply_markup=create_keyboard(all_regions))
+        await clbk.message.answer(CHOICE_REGION_CLIENT, reply_markup=create_keyboard(all_regions))
     elif clbk.data == "back":
-        await clbk.message.answer("Введите желаемую дату")
+        await clbk.message.answer(ENTER_DATE_SERVICE)
         await state.set_state(ClientForm.correct_data_service)
 
 @client_router.callback_query(ClientForm.correct_district)
 async def cor7(clbk: CallbackQuery, state: FSMContext):
     await state.update_data(district=clbk.data)
     await state.set_state(ClientForm.check_district)
-    await clbk.message.answer(f"Вы уверенны в своем выборе: {clbk.data}", reply_markup=kb.check)
+    await clbk.message.answer(f"{CHECK_MESSAGE}: {clbk.data}?", reply_markup=kb.check)
 
 
 @client_router.callback_query(ClientForm.check_district)
-async def prov7(clbk: CallbackQuery, state: FSMContext, bot: Bot):
+async def process_district_check(clbk: CallbackQuery, state: FSMContext, bot: Bot):
     if clbk.data == "continue":
-        await clbk.message.answer("Мы отправили вашу заявку", reply_markup=kb_sec.client)
+        await clbk.message.answer(FINAL_MESSAGE_CLIENT, reply_markup=kb_sec.client)
         data = await state.get_data()
         await state.clear()
         if data['position'] == 'Размещение':
@@ -323,7 +324,7 @@ async def prov7(clbk: CallbackQuery, state: FSMContext, bot: Bot):
     elif clbk.data == "back":
         all_regions = await get_regions()
         all_regions.append('Искать во всех районах')
-        await clbk.message.answer("Выберите район", reply_markup=create_keyboard(all_regions))
+        await clbk.message.answer(CHOICE_REGION_CLIENT, reply_markup=create_keyboard(all_regions))
         await state.set_state(ClientForm.correct_district)
 
 
