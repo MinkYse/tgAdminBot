@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from typing import List
 import uuid
 import re
+import os
 from asgiref.sync import sync_to_async
 
 import bot.Keyboards as kb
@@ -225,6 +226,9 @@ async def prov5(clbk: CallbackQuery, state: FSMContext):
         await state.set_state(Form.correct_number)
         await clbk.message.answer(SEND_NUMBER)
     elif clbk.data == "back":
+        data = await state.get_data()
+        for file in data['photos']:
+            os.remove(f'media/{file}')
         await clbk.message.answer(SEND_PHOTO)
         await state.set_state(Form.photo_get)
 
