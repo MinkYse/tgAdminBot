@@ -4,8 +4,8 @@
 <form action="" method="post">{% csrf_token %}
     {{ form }}
     <p>Сообщение будет отправленно следующим пользователям</p>
-    <ul>{{ items|unordered_list }}</ul>
+    <ul class="list-group list-group-item">{{ items|unordered_list }}</ul>
     <input type="hidden" name="action" value="send_messages" />
-    <input type="submit" name="apply" value="Отправить" />
+    <input class="btn-primary" type="submit" name="apply" value="Отправить" />
 </form>
 {% endblock %}
