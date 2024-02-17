@@ -57,6 +57,7 @@ async def admin_agree(call: types.callback_query, bot: Bot):
         tg_id = await get_user_service_by_id(user_id)
         await change_service_status(user_id)
     await bot.send_message(chat_id=tg_id, text='Поздравляем! Ваша заявка прошла модерацию')
+    await call.message.delete_reply_markup()
 
 
 @admin_router.callback_query(F.data.startswith('disagree'))
@@ -71,5 +72,6 @@ async def admin_agree(call: types.callback_query, bot: Bot):
         await delete_service(user_id)
     await bot.send_message(chat_id=tg_id, text='<b>К сожалению ваша заявка не прошла модерацию</b>\n'
                                                'Попробуйте сделать вашу заявку более подробной')
+    await call.message.delete_reply_markup()
 
 

@@ -350,12 +350,19 @@ async def admin_agree(call: CallbackQuery, bot: Bot):
                            f'Описание: {product["description"]}\n'
                            f'Номер телефона: {product["phone"]}\n'
                            f'Цена: от {product["min_price"]} до {product["max_price"]}\n'                      
-                           f'Адрес: https://yandex.ru/maps/?text={product["address"]}',
-                           reply_markup=confirm_keyboard(product['owner'], call.from_user.username, product['name']))
+                           f'Адрес: <a href="https://yandex.ru/maps/?text={product["address"]}">{product["address"]}</a>\n\n',
+                           reply_markup=confirm_keyboard(product['owner'], data[3], data[2]))
 
 
 @client_router.callback_query(F.data.startswith('confirm'))
 async def confirm_client(call: CallbackQuery, bot: Bot):
     data = call.data.split('-')
+    if data[2] == 'Размещение':
+        product = await get_hotel_by_id(data[3])
+        await bot.send_message(chat_id=data[1],
+                               text=f'<b>Пользователь {call.from_user.username} подтвердил своё бронирование вашего отеля {product["name"]}</b>')
+    else:
+        product = await get_service_by_id(data[3])
+        await bot.send_message(chat_id=data[1],
+                               text=f'<b>Пользователь {call.from_user.username} подтвердил своё бронирование вашей услуги {product["name"]}</b>')
     await call.message.delete_reply_markup()
-    await bot.send_message(chat_id=data[1], text=f'<b>Пользователь {call.from_user.username} подтвердил своё бронирование вашего отеля {data[3]}</b>')
