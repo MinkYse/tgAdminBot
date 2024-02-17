@@ -1,5 +1,5 @@
 # Токен бота
-TOKEN = 'BOT_TOKEN'
+TOKEN = '6644534760:AAGNW1Wkjw5kw9fDjn68WdHZAvYKj50sPWM'
 
 # id чата для администраторов (нужно добавить бота в этот чат)
 ADMIN_CHAT_ID = 'ADMIN_CHAT_ID'
