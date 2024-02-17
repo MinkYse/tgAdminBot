@@ -60,13 +60,13 @@ def get_service_by_id(product_id):
 @sync_to_async
 def get_hotel_by_region_and_type(region, category):
 
-    if region == 'Искать во всех районах':
-        if category == 'Любой тип размещения':
+    if region == ALL_DISTRICT_BUTTON:
+        if category == ALL_TYPE_POSITION_BUTTON:
             products = Hotel.objects.filter(is_active=True)
         else:
             products = Hotel.objects.filter(category__name=category, is_active=True)
     else:
-        if category == 'Любой тип размещения':
+        if category == ALL_TYPE_POSITION_BUTTON:
             products = Hotel.objects.filter(region__name=region, is_active=True)
         else:
             products = Hotel.objects.filter(region__name=region, category__name=category, is_active=True)
@@ -84,10 +84,16 @@ def get_hotel_by_region_and_type(region, category):
 
 @sync_to_async
 def get_service_by_region_and_type(region, category):
-    if region == 'Искать во всех регионах':
-        products = Service.objects.filter(category__name=category, is_active=True)
+    if region == ALL_DISTRICT_BUTTON:
+        if category == ALL_TYPE_POSITION_BUTTON:
+            products = Service.objects.filter(is_active=True)
+        else:
+            products = Service.objects.filter(category__name=category, is_active=True)
     else:
-        products = Service.objects.filter(region__name=region, category__name=category, is_active=True)
+        if category == ALL_TYPE_POSITION_BUTTON:
+            products = Service.objects.filter(region__name=region, is_active=True)
+        else:
+            products = Service.objects.filter(region__name=region, category__name=category, is_active=True)
     product_list = []
     for product in products:
         data = {
@@ -111,7 +117,7 @@ def get_regions():
     return [region.name for region in all_regions]
 
 
-@client_router.message(F.text == "Сделать новый заказ")
+@client_router.message(F.text == CREATE_NEW_ORDER)
 async def new_order(message: Message, state: FSMContext):
     await state.set_state(ClientForm.correct_position)
     await message.answer(CHOICE_PRODUCT_CLIENT, reply_markup=kb.wh_bus)
@@ -147,7 +153,7 @@ async def prov2(clbk: CallbackQuery, state: FSMContext):
         await state.update_data(username=clbk.from_user.username)
         await state.set_state(ClientForm.correct_type_position_hotel)
         list_categories = await get_categories('Отели')
-        list_categories.append('Любой тип размещения')
+        list_categories.append(ALL_TYPE_POSITION_BUTTON)
         await clbk.message.answer(CHOICE_HOTEL_TYPE_CLIENT, reply_markup=create_keyboard(list_categories))
     elif clbk.data == "back":
         await clbk.message.answer(CHOICE_PRODUCT_CLIENT, reply_markup=kb.wh_bus)
@@ -170,7 +176,7 @@ async def cor3(clbk: CallbackQuery, state: FSMContext):
 @client_router.callback_query(ClientForm.check_type_position_service)
 async def prov3(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
-        await state.set_state(ClientForm.correct_count)
+        await state.set_state(ClientForm.correct_count_service)
         await clbk.message.answer(ENTER_PEOPLE_SERVICE)
     elif clbk.data == "back":
         list_categories = await get_categories('Услуги')
@@ -184,7 +190,7 @@ async def prov3(clbk: CallbackQuery, state: FSMContext):
         await clbk.message.answer(ENTER_PEOPLE_HOTEL)
     elif clbk.data == "back":
         list_categories = await get_categories('Отели')
-        list_categories.append('Любой тип размещения')
+        list_categories.append(ALL_TYPE_POSITION_BUTTON)
         await clbk.message.answer(CHOICE_HOTEL_TYPE_CLIENT, reply_markup=create_keyboard(list_categories))
         await state.set_state(ClientForm.correct_type_position_hotel)
 
@@ -266,7 +272,7 @@ async def prov6(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(ClientForm.correct_district)
         all_regions = await get_regions()
-        all_regions.append('Искать во всех районах')
+        all_regions.append(ALL_DISTRICT_BUTTON)
         await clbk.message.answer(CHOICE_REGION_CLIENT, reply_markup=create_keyboard(all_regions))
     elif clbk.data == "back":
         await clbk.message.answer(ENTER_DATE_HOTEL_TWO)
@@ -277,7 +283,7 @@ async def prov6(clbk: CallbackQuery, state: FSMContext):
     if clbk.data == "continue":
         await state.set_state(ClientForm.correct_district)
         all_regions = await get_regions()
-        all_regions.append('Искать во всех районах')
+        all_regions.append(ALL_DISTRICT_BUTTON)
         await clbk.message.answer(CHOICE_REGION_CLIENT, reply_markup=create_keyboard(all_regions))
     elif clbk.data == "back":
         await clbk.message.answer(ENTER_DATE_SERVICE)
@@ -323,7 +329,7 @@ async def process_district_check(clbk: CallbackQuery, state: FSMContext, bot: Bo
                 )
     elif clbk.data == "back":
         all_regions = await get_regions()
-        all_regions.append('Искать во всех районах')
+        all_regions.append(ALL_DISTRICT_BUTTON)
         await clbk.message.answer(CHOICE_REGION_CLIENT, reply_markup=create_keyboard(all_regions))
         await state.set_state(ClientForm.correct_district)
 

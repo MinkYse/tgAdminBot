@@ -100,7 +100,7 @@ async def get_info(message: Message, state: FSMContext):
         await message.answer(INFO, reply_markup=kb.bussiness)
 
 
-@router.message(F.text == "Разместить объявление")
+@router.message(F.text == CREATE_NEW_ADVETISEMENT)
 async def prov1(message: Message, state: FSMContext):
     await state.set_state(Form.correct_position)
     await message.answer(CHOOSING_PRODUCT_TYPE, reply_markup=kb.wh_bus)
@@ -365,11 +365,11 @@ async def prov11(clbk: CallbackQuery, state: FSMContext, bot: Bot):
         await bot.send_message(chat_id='-4190766673',
                                text='<b>Созданно новое предложение!</b>\n\n'
                                     f'Номер заказа: {product_id}\n'
-                                    f'Название отеля: {data["name"]}\n'
+                                    f'Название {data["position"]}: {data["name"]}\n'
                                     f'Описание: {data["description"]}\n'
                                     f'Минимальная цена: {data["min_money"]}\n'
                                     f'Максимальная цена: {data["max_money"]}\n'
-                                    f'Тип размещения: {data["type_position"]}\n'
+                                    f'Тип {data["position"]}: {data["type_position"]}\n'
                                     f'Адрес: {data["geo_position"]}\n'
                                     f'Номер телефона: {data["phone"]}\n'
                                     f'Район размещения: {data["get_distriction"]}',
