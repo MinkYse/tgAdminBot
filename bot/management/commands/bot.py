@@ -9,9 +9,10 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from bot.handlers import router
 from bot.admin_handler import admin_router
 from bot.handlers_client import client_router
+from constants import TOKEN
 
 
-bot = Bot(token='6644534760:AAGNW1Wkjw5kw9fDjn68WdHZAvYKj50sPWM', parse_mode=ParseMode.HTML)
+bot = Bot(token=TOKEN, parse_mode=ParseMode.HTML)
 dp = Dispatcher(storage=MemoryStorage())
 dp.include_router(router)
 dp.include_router(admin_router)

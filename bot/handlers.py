@@ -361,8 +361,8 @@ async def prov11(clbk: CallbackQuery, state: FSMContext, bot: Bot):
             product_id = await create_product(service, data)
 
         media = [types.InputMediaPhoto(types='photo', media=types.FSInputFile(fr'media/{ph}')) for ph in data['photos']]
-        await bot.send_media_group(chat_id='-4190766673', media=media)
-        await bot.send_message(chat_id='-4190766673',
+        await bot.send_media_group(chat_id=ADMIN_CHAT_ID, media=media)
+        await bot.send_message(chat_id=ADMIN_CHAT_ID,
                                text='<b>Созданно новое предложение!</b>\n\n'
                                     f'Номер заказа: {product_id}\n'
                                     f'Название {data["position"]}: {data["name"]}\n'
