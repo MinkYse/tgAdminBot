@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    command: gunicorn tgBotAdmin.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+      - media_files:/home/app/web/media
+    expose:
+      - 8000
+    depends_on:
+      - db
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=tg
+  nginx:
+    build:
+      context: ./nginx
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+      - media_files:/home/app/web/media
+    ports:
+      - 80:80
+    depends_on:
+      - web
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    command: python manage.py bot
+    volumes:
+      - media_files:/home/app/web/media
+    depends_on:
+      - db
+
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_files:
